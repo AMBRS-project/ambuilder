@@ -113,6 +113,7 @@ add_subdirectory(libraries)
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_BINARY_DIR}/include")
 link_directories("${PROJECT_BINARY_DIR}/lib")
+link_directories("${PROJECT_BINARY_DIR}/lib64")
 
 # the box models
 add_subdirectory(mam4)

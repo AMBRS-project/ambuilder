@@ -224,6 +224,18 @@ if (ENABLE_CAMP)
     LOG_OUTPUT_ON_FAILURE TRUE
   )
 
+  # copy json-fortran libraries into the right place for MAM4 to see them
+# D. Quevedo: Jan 29 2025
+  if (NOT ${CMAKE_INSTALL_LIBDIR} STREQUAL "lib")
+    ExternalProject_Add_Step(json_fortran_proj copy-json-fortran-libraries
+      COMMENT "Copying json-fortran libraries into ${CMAKE_BINARY_DIR}/lib..."
+      COMMAND cmake -E copy lib64/libjsonfortran.a lib
+      LOG TRUE
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      DEPENDEES install
+    )
+  endif()
+
   # SuiteSparse for solving sparse linear systems
   # NOTE: we must build shared libraries for SuiteSparse because of
   # NOTE: licensing terms (the LGPL, specifically)
@@ -280,7 +292,9 @@ if (ENABLE_CAMP)
     JSON_FORTRAN_HOME=${CMAKE_BINARY_DIR}
     SUNDIALS_HOME=${CMAKE_BINARY_DIR}
   )
-  ExternalProject_Add(camp
+  add_library(camp SHARED IMPORTED)
+  set_target_properties(camp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp.so)
+  ExternalProject_Add(camp_proj
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/camp
     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
     DOWNLOAD_NAME camp.zip
@@ -326,7 +340,7 @@ if (ENABLE_CAMP)
   )
   if (NOT ${CMAKE_INSTALL_LIBDIR} STREQUAL "lib")
     # copy CVODE/Sundials libraries into the right place for CAMP to see them
-    ExternalProject_Add_Step(camp copy-cvode-libraries
+    ExternalProject_Add_Step(camp_proj copy-cvode-libraries
       COMMENT "Copying CAMP-specific CVODE libraries into ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}..."
       COMMAND cmake -E copy lib/libsundials_nvecserial.so.3
 	                          lib/libsundials_cvode.so.3
@@ -335,7 +349,7 @@ if (ENABLE_CAMP)
                             ${CMAKE_INSTALL_LIBDIR}
       LOG TRUE
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      DEPENDEES patch     # CAMP must be downloaded before this step
+      DEPENDEES patch build-cvode     # CAMP must be downloaded and built before this step
       DEPENDERS configure # CAMP must be configured after this step
     )
   endif()
