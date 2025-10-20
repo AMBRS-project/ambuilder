@@ -122,6 +122,9 @@ set(NETCDF_CMAKE_ARGS
   -DHDF5_C_LIBRARY:FILEPATH=${HDF5_LIBRARY}
   -DHDF5_HL_LIBRARY:FILEPATH=${HDF5_HL_LIBRARY}
   -DHDF5_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
+  # FIXME: Laura added these; double-check
+  -DZLIB_LIBRARY:FILEPATH=${CMAKE_BINARY_DIR}/lib/libz.a
+  -DZLIB_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
 )
 ExternalProject_Add(netcdf_proj
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/netcdf-c
@@ -191,6 +194,15 @@ unset(ENV{LDFLAGS})
 
 if (ENABLE_CAMP)
   # this code block installs everything needed by CAMP
+
+  # FIXME: LMF added this; need to double-check
+  # Shared library extension per platform
+  if (APPLE)
+    set(SHARED_EXT ".dylib")
+  else()
+    set(SHARED_EXT ".so")
+  endif()
+
 
   # json-fortran
   add_library(json-fortran STATIC IMPORTED GLOBAL)
@@ -287,13 +299,42 @@ if (ENABLE_CAMP)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+    # SuiteSparse (headers + libs you already installed above)
+    # FIXME: Laura made a change here (should it be "CMAKE_CURRENT_BINARY_DIR" instead of "CMAKE_BINARY_DIR"?)
+    -DSUITE_SPARSE_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
+    -DSUITE_SPARSE_LIBRARY_DIR:PATH=${CMAKE_BINARY_DIR}/lib
+    # FIXME: here is the previous code, replaced abve by LMF:
+    #-DSUITE_SPARSE_INCLUDE_DIR:PATH=${CMAKE_CURRENT_BINARY_DIR}/SuiteSparse-src/include
+    #-DSUITE_SPARSE_LIBRARY_DIR:PATH=${CMAKE_CURRENT_BINARY_DIR}/SuiteSparse-src/lib
+
+    # FIXME: Laura modified this; double-check
+    # Point CAMP at the SUNDIALS shared libs produced by the cvode-3.4-alpha build
+    -DSUNDIALS_CVODE_LIB:FILEPATH=${CMAKE_BINARY_DIR}/lib/libsundials_cvode${SHARED_EXT}
+ #   -DSUNDIALS_KLU_LIB:FILEPATH=${CMAKE_BINARY_DIR}/lib/libklu${SHARED_EXT}
+    -DSUNDIALS_KLU_LIB:FILEPATH=${CMAKE_BINARY_DIR}/lib/libsundials_sunlinsolklu${SHARED_EXT}
+
+    # -DSUITE_SPARSE_KLU_LIB:FILEPATH=${CMAKE_BINARY_DIR}/lib/libklu.dylib
+    # -DSUNDIALS_KLU_LIB:FILEPATH=${CMAKE_BINARY_DIR}/lib/libklu.dylib
+    # FIXME: Laura added this; double-check
+    # Optional but helpful to avoid CAMP test targets on macOS
+    -DBUILD_TESTING:BOOL=OFF
+    -DCAMP_BUILD_TESTS:BOOL=OFF
+    -DCAMP_ENABLE_TESTS:BOOL=OFF
+    -DCAMP_ENABLE_EXAMPLES:BOOL=OFF
+    -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON
   )
+
   set(CAMP_ENV_VARS
     JSON_FORTRAN_HOME=${CMAKE_BINARY_DIR}
     SUNDIALS_HOME=${CMAKE_BINARY_DIR}
+    SUITE_SPARSE_HOME=${CMAKE_BINARY_DIR}
   )
-  add_library(camp SHARED IMPORTED)
-  set_target_properties(camp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp.so)
+  add_library(camp SHARED IMPORTED GLOBAL)
+  # FIXME: Laura changed this; double-check
+  #set_target_properties(camp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp.so)
+  set_target_properties(camp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp${CMAKE_SHARED_LIBRARY_SUFFIX})
+  add_dependencies(camp camp_proj)
+
   ExternalProject_Add(camp_proj
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/camp
     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
@@ -302,32 +343,52 @@ if (ENABLE_CAMP)
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/camp-bld
     URL ${CAMP_DOWNLOAD_URL}
     URL_MD5 ${CAMP_MD5}
-    DEPENDS json_fortran_proj
+    DEPENDS json_fortran_proj suitesparse_proj
     UPDATE_COMMAND ""
     # NOTE: vvv PartMC-friendly version of CAMP needs this patch vvv
     PATCH_COMMAND cmake -E copy ${CMAKE_CURRENT_SOURCE_DIR}/camp_common.h ${CMAKE_CURRENT_BINARY_DIR}/camp-src/src/camp_common.h
     CONFIGURE_COMMAND cmake -E env ${CAMP_ENV_VARS} cmake -S ${CMAKE_CURRENT_BINARY_DIR}/camp-src -B ${CMAKE_CURRENT_BINARY_DIR}/camp-bld ${CAMP_CMAKE_ARGS}
     LOG_CONFIGURE TRUE
-    BUILD_COMMAND make
+    # FIXME: Laura changed this; double-check
+    BUILD_COMMAND $(MAKE) camplib camplib-static camp_box_model
+    #BUILD_COMMAND make
     LOG_BUILD TRUE
-    INSTALL_COMMAND make install
+    #INSTALL_COMMAND make install
+    #INSTALL_COMMAND ""
+    INSTALL_COMMAND ${CMAKE_COMMAND} -P cmake_install.cmake
     LOG_INSTALL TRUE
     LOG_OUTPUT_ON_FAILURE TRUE
   )
-  # build CAMP's patched/old version of CVODE for solving chemistry ODEs
-  set(CAMP_CVODE_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/camp-src/cvode-3.4-alpha)
-  set(CAMP_CVODE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/camp-cvode-bld)
-  set(CAMP_CVODE_TARBALL ${CAMP_CVODE_SOURCE_DIR}.tar.gz)
-  set(CAMP_CVODE_CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-    -DBUILD_SHARED_LIBS=ON
-    -DKLU_ENABLE=ON
-    -DKLU_LIBRARY_DIR=${CMAKE_BINARY_DIR}/lib
-    -DKLU_INCLUDE_DIR=${CMAKE_BINARY_DIR}/include
-  )
-  ExternalProject_Add_Step(camp build-cvode
+  # FIXME: Laura added this; double-check
+  # # Copy libcamp.* into the top-level lib dir so the imported target finds it
+  # ExternalProject_Add_Step(camp_proj copy-camp-libs
+  #   COMMENT "Copying CAMP libraries into ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}..."
+  #   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+  #   COMMAND ${CMAKE_COMMAND} -E copy
+  #           ${CMAKE_CURRENT_BINARY_DIR}/camp-bld/lib/libcamp${CMAKE_SHARED_LIBRARY_SUFFIX}
+  #           ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+  #   COMMAND ${CMAKE_COMMAND} -E copy
+  #           ${CMAKE_CURRENT_BINARY_DIR}/camp-bld/lib/libcamp.a
+  #           ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+  #   DEPENDEES build
+  # )
+
+
+    # build CAMP's patched/old version of CVODE for solving chemistry ODEs
+    set(CAMP_CVODE_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/camp-src/cvode-3.4-alpha)
+    set(CAMP_CVODE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/camp-cvode-bld)
+    set(CAMP_CVODE_TARBALL ${CAMP_CVODE_SOURCE_DIR}.tar.gz)
+    set(CAMP_CVODE_CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DBUILD_SHARED_LIBS=ON
+      -DKLU_ENABLE=ON
+      -DKLU_LIBRARY_DIR=${CMAKE_BINARY_DIR}/lib
+      -DKLU_INCLUDE_DIR=${CMAKE_BINARY_DIR}/include
+    )
+    
+  ExternalProject_Add_Step(camp_proj build-cvode
     COMMENT "Building CAMP-specific CVODE..."
     COMMAND cmake -E tar xfz ${CAMP_CVODE_TARBALL}
     COMMAND cmake -S ${CAMP_CVODE_SOURCE_DIR} -B ${CAMP_CVODE_BUILD_DIR} ${CAMP_CVODE_CMAKE_ARGS}
@@ -338,27 +399,43 @@ if (ENABLE_CAMP)
     DEPENDEES patch     # CAMP must be downloaded before this step
     DEPENDERS configure # CAMP must be configured after this step
   )
+  
   if (NOT ${CMAKE_INSTALL_LIBDIR} STREQUAL "lib")
-    # copy CVODE/Sundials libraries into the right place for CAMP to see them
+    # FIXME: LMF added this; need to double-check
+    # OPTIONAL: only if you want to keep the copy step
     ExternalProject_Add_Step(camp_proj copy-cvode-libraries
-      COMMENT "Copying CAMP-specific CVODE libraries into ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}..."
-      COMMAND cmake -E copy lib/libsundials_nvecserial.so.3
-	                          lib/libsundials_cvode.so.3
-                            lib/libsundials_sunlinsolklu.so.1
-	                          lib/libsundials_sunmatrixsparse.so.1
-                            ${CMAKE_INSTALL_LIBDIR}
+      COMMENT "Copying SUNDIALS CVODE libs into ${CMAKE_INSTALL_LIBDIR}..."
+      COMMAND ${CMAKE_COMMAND} -E copy
+              lib/libsundials_nvecserial${SHARED_EXT}
+              lib/libsundials_cvode${SHARED_EXT}
+              lib/libsundials_sunlinsolklu${SHARED_EXT}
+              lib/libsundials_sunmatrixsparse${SHARED_EXT}
+              ${CMAKE_INSTALL_LIBDIR}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      DEPENDEES patch build-cvode
+      DEPENDERS configure
       LOG TRUE
+    # # copy CVODE/Sundials libraries into the right place for CAMP to see them
+    # ExternalProject_Add_Step(camp_proj copy-cvode-libraries
+    #   COMMENT "Copying CAMP-specific CVODE libraries into ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}..."
+    #   COMMAND cmake -E copy lib/libsundials_nvecserial.so.3
+	  #                         lib/libsundials_cvode.so.3
+    #                         lib/libsundials_sunlinsolklu.so.1
+	  #                         lib/libsundials_sunmatrixsparse.so.1
+    #                         ${CMAKE_INSTALL_LIBDIR}
+    #   LOG TRUE
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       DEPENDEES patch build-cvode     # CAMP must be downloaded and built before this step
       DEPENDERS configure # CAMP must be configured after this step
     )
   endif()
-  ExternalProject_Add_Step(camp relocate-camp-headers
-    COMMENT "Copying CAMP headers to where PartMC can find them..."
-    COMMAND cmake -E copy_directory ${CMAKE_BINARY_DIR}/include/camp ${CMAKE_BINARY_DIR}/include
-    LOG TRUE
-    DEPENDEES install # CAMP must be installed before this step
-  )
+  # FIXME: Laura removed this; double-check
+  # ExternalProject_Add_Step(camp_proj relocate-camp-headers
+  #   COMMENT "Copying CAMP headers to where PartMC can find them..."
+  #   COMMAND cmake -E copy_directory ${CMAKE_BINARY_DIR}/include/camp ${CMAKE_BINARY_DIR}/include
+  #   LOG TRUE
+  #   DEPENDEES install # CAMP must be installed before this step
+  # )
 endif() # ENABLE_CAMP
 
 # MOSAIC (if requested)

@@ -1,0 +1,53 @@
+{
+  "camp-data": [
+    {
+      "name": "SOAG",
+      "type": "CHEM_SPEC",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.012011,
+      "diffusion coeff [m2 s-1]": 9.517e-6
+    },
+    {
+      "name": "H2SO4",
+      "type": "CHEM_SPEC",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.098,
+      "diffusion coeff [m2 s-1]": 7.3e-6
+    },
+
+    { "name": "SO4", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.11510734,
+      "density [kg m-3]": 1770.0, "num_ions": 2, "charge": -2, "kappa": 0.55 },
+
+    { "name": "SOA", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.12,
+      "density [kg m-3]": 1000.0, "num_ions": 0, "charge": 0, "kappa": 0.14 },
+
+    { "name": "POM", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.012011,
+      "density [kg m-3]": 1000.0, "num_ions": 0, "charge": 0, "kappa": 0.10 },
+
+    { "name": "BC", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.012011,
+      "density [kg m-3]": 1700.0, "num_ions": 0, "charge": 0, "kappa": 1e-10 },
+
+    { "name": "DST", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.06008,
+      "density [kg m-3]": 2650.0, "num_ions": 0, "charge": 0, "kappa": 0.14 },
+
+    { "name": "NCL", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.05844,
+      "density [kg m-3]": 2170.0, "num_ions": 0, "charge": 0, "kappa": 0.40 },
+
+    { "name": "MOM", "type": "CHEM_SPEC", "phase": "AEROSOL",
+      "absolute integration tolerance": 1e-6,
+      "molecular weight [kg mol-1]": 0.012011,
+      "density [kg m-3]": 1000.0, "num_ions": 0, "charge": 0, "kappa": 0.10 }
+  ]
+}

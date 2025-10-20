@@ -2,8 +2,13 @@
 # since it doesn't have a reasonable build system.
 
 # download and extract the source for MAM4
-set(MAM4_SOURCE_URL https://github.com/AMBRS-project/MAM_box_model/archive/refs/heads/main.zip)
-set(MAM4_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/MAM_box_model-main)
+#set(MAM4_SOURCE_URL https://github.com/AMBRS-project/MAM_box_model/archive/refs/heads/main.zip)
+#set(MAM4_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/MAM_box_model-main)
+
+# FIXME: on laura's branch for CAMP sync
+set(MAM4_SOURCE_URL https://github.com/AMBRS-project/MAM_box_model/archive/refs/heads/features/laura-camp-sync.zip)
+set(MAM4_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/MAM_box_model-features-laura-camp-sync)
+
 if (NOT EXISTS ${MAM4_SOURCE_DIR})
   file(DOWNLOAD ${MAM4_SOURCE_URL} ${CMAKE_SOURCE_DIR}/downloads/mam4.zip)
   file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/downloads/mam4.zip)
@@ -58,16 +63,72 @@ add_executable(mam4
   ${MAM4_SOURCE_DIR}/e3sm_src/modal_aero_coag.F90
   ${MAM4_SOURCE_DIR}/e3sm_src_modified/modal_aero_amicphys.F90
   ${MAM4_SOURCE_DIR}/e3sm_src/modal_aero_initialize_data.F90
+  # FIXME: Laura added this; duplicate below?
+
+  #${MAM4_SOURCE_DIR}/e3sm_src_modified/camp_interface.F90
 
   ${MAM4_SOURCE_DIR}/box_model_utils/gaschem_simple.F90
   ${MAM4_SOURCE_DIR}/box_model_utils/cloudchem_simple.F90
   ${MAM4_SOURCE_DIR}/test_drivers/driver.F90
   ${MAM4_SOURCE_DIR}/box_model_utils/main.F90
 )
-target_link_libraries(mam4 netcdff netcdf hdf5_hl hdf5 dl z)
+
+if(ENABLE_CAMP)
+    # Add the CAMP interface file to this target when CAMP is enabled
+    target_sources(mam4 PRIVATE
+      ${MAM4_SOURCE_DIR}/e3sm_src_modified/set_state.F90
+      ${MAM4_SOURCE_DIR}/e3sm_src_modified/camp_interface.F90
+    )
+    foreach(tgt IN ITEMS mam4 mam_box_model)
+      if(TARGET ${tgt})
+        target_compile_definitions(${tgt} PRIVATE MAM4_USE_CAMP)
+
+        # Where CAMP installs its .mod files (we install to ${CMAKE_BINARY_DIR})
+        target_include_directories(${tgt} PRIVATE
+          ${CMAKE_BINARY_DIR}/include          # already present globally, but harmless
+          ${CMAKE_BINARY_DIR}/include/camp     # ensure modules are visible
+        )
+
+        target_link_libraries(${tgt} PRIVATE camp)  # imported target from libraries/
+        add_dependencies(${tgt} camp_proj)          # belt + suspenders: wait for CAMP build+install
+        if(TARGET mam4)
+          # Where netcdf.mod gets installed by netcdf-fortran
+          target_include_directories(mam4 PRIVATE ${CMAKE_BINARY_DIR}/include)
+
+          # Link to the imported libs defined in libraries/CMakeLists.txt
+          target_link_libraries(mam4 PRIVATE netcdff netcdf)
+
+          # Ensure the ExternalProject for netcdf-fortran has installed
+          add_dependencies(mam4 netcdff_proj)
+        endif()
+      endif()
+    endforeach()
+
+    # # Make sure the CAMP module .mod files are visible at compile time
+    # target_include_directories(mam4 PRIVATE ${CMAKE_BINARY_DIR}/include)
+
+    # # fixme: Laura added this; double-check
+    # add_dependencies(mam4 camp_proj)   # wait for ExternalProject to finish
+
+    # # fixme: Laura added "PRIVATE" here; double-check
+    # #target_link_libraries(mam4 camp netcdff netcdf hdf5_hl hdf5 dl z)
+    # target_link_libraries(mam4 PRIVATE camp netcdff netcdf hdf5_hl hdf5 dl z)
+    # target_compile_definitions(mam4 PRIVATE MAM4_USE_CAMP)
+
+    # set_target_properties(mam4 PROPERTIES
+    #     BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
+    #     INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib")
+        
+else()
+    target_link_libraries(mam4 netcdff netcdf hdf5_hl hdf5 dl z)
+endif()
+
 
 # These macros are defined in ${MAM4_SOURCE_DIR}/test_drivers/cambox_config.cpp.in.
 target_compile_definitions(mam4 PRIVATE CAMBOX_ACTIVATE_THIS;CAMBOX_DEACTIVATE_THIS;MODAL_AERO;MODAL_AERO_4MODE_MOM;RAIN_EVAP_TO_COARSE_AERO;PCNST=35;PCOLS=1;PVER=1;NBC=1;NPOA=1;NSOA=1)
+if(ENABLE_CAMP)
+  add_definitions(-DMAM4_USE_CAMP)
+endif()
 
 install(
   TARGETS mam4

@@ -1,0 +1,36 @@
+{
+  "camp-data": [
+    { "type": "RELATIVE_TOLERANCE", "value": 1e-10 },
+
+    {
+      "name": "condense_SOA_and_H2SO4",
+      "type": "MECHANISM",
+      "reactions": [
+
+        {
+          "type": "SIMPOL_PHASE_TRANSFER",
+          "name": "SOAG_to_SOA",
+          "gas-phase species": "SOAG",
+          "aerosol phase": "mixed",
+          "aerosol-phase species": "SOA",
+          "parameters": {
+            "B": [0.0, -8.9, 0.0, 0.0],
+            "N star": 1.23299521
+          }
+        },
+
+        {
+          "type": "HL_PHASE_TRANSFER",
+          "name": "H2SO4_to_SO4",
+          "gas-phase species": "H2SO4",
+          "aerosol phase": "mixed",
+          "aerosol-phase species": "SO4",
+          "parameters": {
+            "HLC(298K) [M Pa-1]": 1.0e12,
+            "HLC exp factor [K]": 0.0
+          }
+        }
+      ]
+    }
+  ]
+}

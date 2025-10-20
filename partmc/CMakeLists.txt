@@ -1,6 +1,7 @@
 include(ExternalProject)
 
 set(PARTMC_DEPS netcdff)
+# NOTE: for now, we only support one of CAMP or MOSAIC at a time
 if (ENABLE_CAMP)
   list(PREPEND PARTMC_DEPS camp)
   set(PARTMC_ENV_VARS ${PARTMC_ENV_VARS} CAMP_HOME=${CMAKE_BINARY_DIR})
@@ -20,7 +21,8 @@ get_target_property(NETCDF_FORTRAN_LIB netcdff IMPORTED_LOCATION)
 add_executable(partmc IMPORTED GLOBAL)
 set_target_properties(partmc PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bin/partmc)
 set(PARTMC_DOWNLOAD_URL https://github.com/AMBRS-Project/partmc/archive/refs/heads/master.zip)
-set(PARTMC_MD5 1a2a39df750b78d6c83a781429505c38)
+#set(PARTMC_MD5 1a2a39df750b78d6c83a781429505c38)
+set(PARTMC_MD5 8dbb176708ab168a2027698f1a17599b)
 set(PARTMC_CMAKE_ARGS
   -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}

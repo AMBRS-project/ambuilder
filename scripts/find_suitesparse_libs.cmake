@@ -1,0 +1,48 @@
+## Auto-detect SuiteSparse libs for CVODE/CAMP on macOS/Linux.
+# Picks .dylib → .a → .so and writes CMake cache FILEPATH entries so KLU is enabled.
+# Usage: pass via `-C ${CMAKE_SOURCE_DIR}/scripts/find_suitesparse_libs.cmake -DAMBUILDER_TOP=<top-build>`
+
+if(NOT DEFINED AMBUILDER_TOP)
+  message(FATAL_ERROR "AMBUILDER_TOP not set; pass -DAMBUILDER_TOP=<top-level build dir>")
+endif()
+
+set(_libdirs "${AMBUILDER_TOP}/lib" "${AMBUILDER_TOP}/lib64")
+if(APPLE)
+  set(_exts ".dylib" ".a" ".so")
+else()
+  set(_exts ".so" ".a")
+endif()
+
+macro(_pick_lib _var _basename)
+  if(NOT DEFINED ${_var} OR NOT EXISTS "${${_var}}")
+    set(_found "")
+    foreach(_d IN LISTS _libdirs)
+      foreach(_e IN LISTS _exts)
+        set(_cand "${_d}/lib${_basename}${_e}")
+        if(EXISTS "${_cand}")
+          set(_found "${_cand}")
+          break()
+        endif()
+      endforeach()
+      if(_found)
+        break()
+      endif()
+    endforeach()
+    if(_found)
+      set(${_var} "${_found}" CACHE FILEPATH "Auto-detected ${_basename} library")
+      message(STATUS "Detected ${_var} = ${_found}")
+    else()
+      message(WARNING "Could not detect ${_basename} library in: ${_libdirs}")
+    endif()
+  endif()
+endmacro()
+
+_pick_lib(KLU_LIBRARY klu)
+_pick_lib(AMD_LIBRARY amd)
+_pick_lib(COLAMD_LIBRARY colamd)
+_pick_lib(BTF_LIBRARY btf)
+_pick_lib(SuiteSparse_config_LIBRARY SuiteSparse_config)
+
+set(KLU_INCLUDE_DIR "${AMBUILDER_TOP}/include" CACHE PATH "SuiteSparse include dir")
+set(SUNDIALS_INCLUDE_DIR "${AMBUILDER_TOP}/include" CACHE PATH "SUNDIALS include dir")
+set(SUNDIALS_KLU_LIB "${KLU_LIBRARY}" CACHE FILEPATH "Alias for KLU lib")

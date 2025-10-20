@@ -9,6 +9,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 option(ENABLE_CAMP "Enables support for CAMP chemistry in relevant aerosol models" OFF)
 
+if(ENABLE_CAMP)
+  # Prefer a config package if CAMP installed one
+  find_package(camp CONFIG QUIET)
+endif()
+
+# if(ENABLE_CAMP)
+#   target_compile_definitions(mam_box_model PRIVATE USE_CAMP)
+#   target_link_libraries(mam_box_model PRIVATE camp)
+# endif()
+
 set(MOSAIC_SOURCE_DIR "" CACHE PATH "source directory for Mosaic")
 if (MOSAIC_SOURCE_DIR)
   set(ENABLE_MOSAIC ON CACHE BOOL "MOSAIC support (determined by MOSAIC_SOURCE_DIR)")

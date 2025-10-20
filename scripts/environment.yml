@@ -1,0 +1,14 @@
+name: ambrs
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - cmake
+  - make
+  - gcc
+  - gfortran
+  - libgcc
+  - numpy
+  - pip
+  - pip:
+    - pyflakes
