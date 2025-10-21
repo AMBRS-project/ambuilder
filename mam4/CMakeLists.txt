@@ -91,16 +91,6 @@ if(ENABLE_CAMP)
 
         target_link_libraries(${tgt} PRIVATE camp)  # imported target from libraries/
         add_dependencies(${tgt} camp_proj)          # belt + suspenders: wait for CAMP build+install
-        if(TARGET mam4)
-          # Where netcdf.mod gets installed by netcdf-fortran
-          target_include_directories(mam4 PRIVATE ${CMAKE_BINARY_DIR}/include)
-
-          # Link to the imported libs defined in libraries/CMakeLists.txt
-          target_link_libraries(mam4 PRIVATE netcdff netcdf)
-
-          # Ensure the ExternalProject for netcdf-fortran has installed
-          add_dependencies(mam4 netcdff_proj)
-        endif()
       endif()
     endforeach()
 
@@ -119,9 +109,28 @@ if(ENABLE_CAMP)
     #     BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
     #     INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib")
         
-else()
-    target_link_libraries(mam4 netcdff netcdf hdf5_hl hdf5 dl z)
+#else()
+#    target_link_libraries(mam4 netcdff netcdf hdf5_hl hdf5 dl z)
 endif()
+# NetCDF-Fortran modules live under build/include
+target_include_directories(mam4 PRIVATE ${CMAKE_BINARY_DIR}/include)
+
+# Link NetCDF-Fortran + NetCDF-C + HDF5 (hl + core) + zlib
+target_link_libraries(mam4 PRIVATE
+  netcdff
+  netcdf
+  hdf5_hl
+  hdf5
+  z
+)
+
+# Ensure externals are built/installed before mam4 links to them
+add_dependencies(mam4
+  netcdff_proj
+  netcdf_proj
+  hdf5_proj
+  zlib_proj
+)
 
 
 # These macros are defined in ${MAM4_SOURCE_DIR}/test_drivers/cambox_config.cpp.in.
