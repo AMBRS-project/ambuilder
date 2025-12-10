@@ -24,6 +24,7 @@ set(ZLIB_MD5 127b8a71a3fb8bebe89df1080f15fdf6)
 set(ZLIB_CMAKE_ARGS
   -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
   -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+  -G "${CMAKE_GENERATOR}"
   -DBUILD_SHARED_LIBS=OFF
 )
 ExternalProject_Add(zlib_proj
@@ -80,6 +81,7 @@ set(HDF5_CMAKE_ARGS
   -DHDF5_BUILD_JAVA=OFF
   -DHDF5_BUILD_TOOLS=OFF
   -DHDF5_BUILD_GENERATORS=OFF
+  -G "${CMAKE_GENERATOR}"
 )
 ExternalProject_Add(hdf5_proj
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/hdf5
@@ -131,6 +133,7 @@ set(NETCDF_CMAKE_ARGS
   -DHDF5_C_LIBRARY:FILEPATH=${HDF5_LIBRARY}
   -DHDF5_HL_LIBRARY:FILEPATH=${HDF5_HL_LIBRARY}
   -DHDF5_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
+  -G "${CMAKE_GENERATOR}"
 )
 ExternalProject_Add(netcdf_proj
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/netcdf-c
@@ -173,6 +176,7 @@ set(NETCDFF_CMAKE_ARGS
   -DENABLE_TESTS=OFF
   -DENABLE_FORTRAN_TYPE_CHECKS=OFF
   -DENABLE_FILTER_TESTING=OFF
+  -G "${CMAKE_GENERATOR}"
 )
 # Because netcdf-fortran's CMake installation is broken, we need to set an
 # environment variable here (https://github.com/Unidata/netcdf-fortran/issues/278#issuecomment-1939307217)
@@ -219,6 +223,7 @@ if (ENABLE_CAMP)
     -DSKIP_DOC_GEN=ON
     -DBUILD_SHARED_LIBS=OFF
     -DUSE_GNU_INSTALL_CONVENTION=ON
+    -G "${CMAKE_GENERATOR}"
   )
   ExternalProject_Add(json_fortran_proj
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/json-fortran
@@ -250,6 +255,7 @@ if (ENABLE_CAMP)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     -DBUILD_SHARED_LIBS=ON
+    -G "${CMAKE_GENERATOR}"
   )
   # need to use CMAKE_CACHE_ARGS to pass in list variables
   set(SUITESPARSE_CMAKE_CACHE_ARGS
@@ -290,6 +296,7 @@ if (ENABLE_CAMP)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+    -G "${CMAKE_GENERATOR}"
   )
   set(CAMP_ENV_VARS
     JSON_FORTRAN_HOME=${CMAKE_BINARY_DIR}
@@ -327,6 +334,7 @@ if (ENABLE_CAMP)
     -DKLU_ENABLE=ON
     -DKLU_LIBRARY_DIR=${CMAKE_BINARY_DIR}/lib
     -DKLU_INCLUDE_DIR=${CMAKE_BINARY_DIR}/include
+    -G "${CMAKE_GENERATOR}"
   )
   ExternalProject_Add_Step(camp build-cvode
     COMMENT "Building CAMP-specific CVODE..."
