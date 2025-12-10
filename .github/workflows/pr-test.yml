@@ -62,7 +62,7 @@ jobs:
 
     - name: Configuring aerosol models (${{ matrix.build-type }})
       run: |
-        cmake -S . -B build -G Ninja \
+        cmake -S . -B build -G "Unix Makefiles" \
         -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
         -DCMAKE_C_COMPILER=gcc \
         -DCMAKE_Fortran_COMPILER=gfortran \
@@ -71,5 +71,5 @@ jobs:
     - name: Building aerosol models (${{ matrix.build-type }})
       run: |
         cd build
-        ninja
-        ninja install
+        make
+        make install
