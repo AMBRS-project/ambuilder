@@ -13,11 +13,13 @@ To use CMake to build the box models and install them to a given folder
 (shown here as `<prefix>`, with a `bin` subfolder), use the following commands:
 
 ```
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=<prefix> [options]
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=<prefix> -G "Unix Makefiles" [options]
 cd build
 make
 make install
 ```
+
+**NOTE: at the time of writing, PartMC doesn't build successfully with Ninja.**
 
 ### Configuration options
 

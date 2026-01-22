@@ -34,6 +34,7 @@ set(PARTMC_CMAKE_ARGS
   -DNETCDF_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
   -DNETCDF_C_LIB:FILEPATH=${NETCDF_C_LIB}
   -DNETCDF_FORTRAN_LIB:FILEPATH=${NETCDF_FORTRAN_LIB}
+  -G "${CMAKE_GENERATOR}"
 )
 ExternalProject_Add(partmc_proj
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/partmc
@@ -50,7 +51,7 @@ ExternalProject_Add(partmc_proj
   # we pass some environment variables via cmake -E env below
   CONFIGURE_COMMAND cmake -E env ${PARTMC_ENV_VARS} cmake -S ${CMAKE_CURRENT_BINARY_DIR}/partmc-src -B ${CMAKE_CURRENT_BINARY_DIR}/partmc-bld ${PARTMC_CMAKE_ARGS}
   LOG_CONFIGURE TRUE
-  BUILD_COMMAND make # (parallel builds have module dependency issues!)
+  BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j 1 # parallel builds have module dependency issues!
   INSTALL_COMMAND cmake -E copy ${CMAKE_CURRENT_BINARY_DIR}/partmc-bld/partmc ${CMAKE_BINARY_DIR}/bin
   LOG_BUILD TRUE
   LOG_OUTPUT_ON_FAILURE TRUE
