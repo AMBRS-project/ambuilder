@@ -70,10 +70,6 @@ set(HDF5_CMAKE_ARGS
   -DHDF5_ENABLE_PARALLEL=OFF
   -DHDF5_ENABLE_NONSTANDARD_FEATURES=OFF
   -DHDF5_ENABLE_SZIP_SUPPORT=OFF
-  -DHDF5_ENABLE_Z_LIB_SUPPORT=ON
-  -DH5_ZLIB_HEADER=zlib.h
-  -DZLIB_INCLUDE_DIR=${CMAKE_BINARY_DIR}/include
-  #-DZLIB_FOUND=TRUE
   -DHDF5_BUILD_CPP_LIB=OFF
   -DHDF5_BUILD_EXAMPLES=OFF
   -DHDF5_BUILD_FORTRAN=OFF
@@ -243,6 +239,16 @@ if (ENABLE_CAMP)
     LOG_OUTPUT_ON_FAILURE TRUE
     BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/lib/libjsonfortran.a
   )
+# copy json-fortran libraries into the right place for MAM4 to see them - D. Quevedo: Jan 29 2025
+if (NOT ${CMAKE_INSTALL_LIBDIR} STREQUAL "lib")
+  ExternalProject_Add_Step(json_fortran_proj copy-json-fortran-libraries
+      COMMENT "Copying json-fortran libraries into ${CMAKE_BINARY_DIR}/lib..."
+      COMMAND cmake -E copy lib64/libjsonfortran.a lib
+      LOG TRUE
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      DEPENDEES install
+  )
+endif()
 
   # SuiteSparse for solving sparse linear systems
   # NOTE: we must build shared libraries for SuiteSparse because of
@@ -302,7 +308,11 @@ if (ENABLE_CAMP)
     JSON_FORTRAN_HOME=${CMAKE_BINARY_DIR}
     SUNDIALS_HOME=${CMAKE_BINARY_DIR}
   )
-  ExternalProject_Add(camp
+  # next couple lines added by D. Quevedo: Jan 29 2025
+  add_library(camp SHARED IMPORTED)
+  set_target_properties(camp PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp.so)
+  ExternalProject_Add(camp_proj # changed camp to camp_proj - D. Quevedo Jan 29 2025
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/camp
     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
     DOWNLOAD_NAME camp.zip
@@ -336,7 +346,7 @@ if (ENABLE_CAMP)
     -DKLU_INCLUDE_DIR=${CMAKE_BINARY_DIR}/include
     -G "${CMAKE_GENERATOR}"
   )
-  ExternalProject_Add_Step(camp build-cvode
+  ExternalProject_Add_Step(camp_proj build-cvode
     COMMENT "Building CAMP-specific CVODE..."
     COMMAND cmake -E tar xfz ${CAMP_CVODE_TARBALL}
     COMMAND cmake -S ${CAMP_CVODE_SOURCE_DIR} -B ${CAMP_CVODE_BUILD_DIR} ${CAMP_CVODE_CMAKE_ARGS}
@@ -349,7 +359,7 @@ if (ENABLE_CAMP)
   )
   if (NOT ${CMAKE_INSTALL_LIBDIR} STREQUAL "lib")
     # copy CVODE/Sundials libraries into the right place for CAMP to see them
-    ExternalProject_Add_Step(camp copy-cvode-libraries
+    ExternalProject_Add_Step(camp_proj copy-cvode-libraries
       COMMENT "Copying CAMP-specific CVODE libraries into ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}..."
       COMMAND cmake -E copy lib/libsundials_nvecserial.so.3
 	                          lib/libsundials_cvode.so.3
@@ -358,11 +368,11 @@ if (ENABLE_CAMP)
                             ${CMAKE_INSTALL_LIBDIR}
       LOG TRUE
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      DEPENDEES patch     # CAMP must be downloaded before this step
+      DEPENDEES patch build-cvode     # CAMP must be downloaded before this step; Edited to add "build-cvode" dependence - D. Quevedo: Jan 29 2025
       DEPENDERS configure # CAMP must be configured after this step
     )
   endif()
-  ExternalProject_Add_Step(camp relocate-camp-headers
+  ExternalProject_Add_Step(camp_proj relocate-camp-headers
     COMMENT "Copying CAMP headers to where PartMC can find them..."
     COMMAND cmake -E copy_directory ${CMAKE_BINARY_DIR}/include/camp ${CMAKE_BINARY_DIR}/include
     LOG TRUE

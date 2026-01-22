@@ -2,7 +2,7 @@ include(ExternalProject)
 
 set(PARTMC_DEPS netcdff)
 if (ENABLE_CAMP)
-  list(PREPEND PARTMC_DEPS camp)
+  list(PREPEND PARTMC_DEPS camp_proj)
   set(PARTMC_ENV_VARS ${PARTMC_ENV_VARS} CAMP_HOME=${CMAKE_BINARY_DIR})
 elseif (ENABLE_MOSAIC)
   list(PREPEND PARTMC_DEPS mosaic)

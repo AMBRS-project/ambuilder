@@ -27,7 +27,7 @@ message(STATUS "Fortran compiler is ${CMAKE_Fortran_COMPILER} (${CMAKE_Fortran_C
 message(STATUS "Configuring Aerosol box models")
 
 # We build static libraries only.
-set(BUILD_SHARED_LIBS OFF)
+set(BUILD_SHARED_LIBS OFF) # switched from OFF - D. Quevedo Jan 31 2025
 
 # Figure out the system type.
 if (APPLE)
@@ -113,6 +113,7 @@ add_subdirectory(libraries)
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_BINARY_DIR}/include")
 link_directories("${PROJECT_BINARY_DIR}/lib")
+# link_directories("${PROJECT_BINARY_DIR}/lib64")
 
 # the box models
 add_subdirectory(mam4)
