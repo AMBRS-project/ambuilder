@@ -65,6 +65,7 @@ add_executable(mam4
   ${MAM4_SOURCE_DIR}/box_model_utils/main.F90
 )
 target_link_libraries(mam4 netcdff netcdf hdf5_hl hdf5 dl z)
+set_target_properties(mam4 PROPERTIES COMPILE_OPTIONS "-ffree-form;-ffree-line-length-0")
 
 # These macros are defined in ${MAM4_SOURCE_DIR}/test_drivers/cambox_config.cpp.in.
 target_compile_definitions(mam4 PRIVATE CAMBOX_ACTIVATE_THIS;CAMBOX_DEACTIVATE_THIS;MODAL_AERO;MODAL_AERO_4MODE_MOM;RAIN_EVAP_TO_COARSE_AERO;PCNST=35;PCOLS=1;PVER=1;NBC=1;NPOA=1;NSOA=1)
