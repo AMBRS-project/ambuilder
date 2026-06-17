@@ -36,6 +36,6 @@ Additional options can be passed to CMake using the `-D` flag:
 * `ENABLE_CAMP={ON,OFF}`: enables support for CAMP chemistry in relevant aerosol
   box models (default: `OFF`)
 * `ENABLE_MOSAIC={ON,OFF}`: enables support for MOSAIC in relevant aerosol box
-  models, using a branch maintained by the PartMC team (default: `ON`)
+  models, using a branch maintained by the PartMC team (default: `OFF`)
 
 **NOTE: only one of CAMP and MOSAIC may be enabled.**
