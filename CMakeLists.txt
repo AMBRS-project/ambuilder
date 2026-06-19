@@ -52,12 +52,7 @@ if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wno-unused-dummy-argument")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wno-unused-variable")
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ffree-form -ffree-line-length-0")
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wno-maybe-uninitialized")
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wno-target-lifetime")
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Werror=tabs")
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-range-check") # <-- we shouldn't need this!
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wno-line-truncation") # <-- we shouldn't need this!
+
   # This is a hack to make our non-standard inf/nan values work with
   # recent, picky versions of GFortran.
   if (${CMAKE_Fortran_COMPILER_VERSION} GREATER_EQUAL 10)
