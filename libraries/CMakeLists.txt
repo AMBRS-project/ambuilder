@@ -372,26 +372,77 @@ endif() # ENABLE_CAMP
 
 # MOSAIC (if requested)
 if (ENABLE_MOSAIC)
+  # NOTE: we use the PartMC team's fork of MOSAIC
+  set(MOSAIC_DOWNLOAD_URL https://github.com/open-atmos/MOSAIC/archive/refs/heads/partmc-library.zip)
+  set(MOSAIC_MD5 6c39a3cb63aecb5535f7b490374e0608)
+  set(MOSAIC_DOWNLOAD_PATH ${CMAKE_SOURCE_DIR}/downloads/mosaic.zip)
+  set(MOSAIC_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/MOSAIC-partmc-library/MOSAIC_v2)
   if (NOT EXISTS ${MOSAIC_SOURCE_DIR})
-    message(FATAL_ERROR "Invalid MOSAIC_SOURCE_DIR (does not exist): ${MOSAIC_SOURCE_DIR}")
+    file(DOWNLOAD ${MOSAIC_DOWNLOAD_URL} ${MOSAIC_DOWNLOAD_PATH} EXPECTED_MD5 ${MOSAIC_MD5})
+    file(ARCHIVE_EXTRACT INPUT ${MOSAIC_DOWNLOAD_PATH} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   endif()
+
+  # Source files are taken from Makefile in ${MOSAIC_SOURCE_DIR}.
   message(STATUS "Building MOSAIC from source code in ${MOSAIC_SOURCE_DIR}")
-  add_library(mosaic STATIC
+
+  add_library(mosaic STATIC # taken from Makefile in ${MOSAIC_SOURCE_DIR} vvv
+    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_kind.f90
+    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_constants.f90
     ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_main.f90
+    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_boxmod.f90
     ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_aero.f90
+    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_asecthp.f90
     ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_gas.f90
     ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_cloud.f90
-    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_kind.f90
+    ${MOSAIC_SOURCE_DIR}/datamodules/module_data_mosaic_pmcmos.f90
 
-    ${MOSAIC_SOURCE_DIR}/aerosol/aerchemistry.f90
-    ${MOSAIC_SOURCE_DIR}/aerosol/aeroptical.f90
-    ${MOSAIC_SOURCE_DIR}/aerosol/miedriver.f90
-    ${MOSAIC_SOURCE_DIR}/aerosol/ASTEM.f90
+    ${MOSAIC_SOURCE_DIR}/main/module_pmcmos_aer.f90
+    ${MOSAIC_SOURCE_DIR}/main/module_pmcmos_init.f90
+    ${MOSAIC_SOURCE_DIR}/main/module_pmcmos_subaa.f90
+
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_aerchem_intr.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_aeroptic_intr.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_aerdynam_intr.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_astem.f90
     ${MOSAIC_SOURCE_DIR}/aerosol/cputime.f90
-    ${MOSAIC_SOURCE_DIR}/aerosol/mosaic_box.21.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_init_aerpar.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_init_aerosol.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_miedriver.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_coag1d.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_coag3d.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_movesect1d.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_movesect3d.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_newnucb.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_peg_util.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_sect_intr.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_box_aerchem.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_ext.f90
+    ${MOSAIC_SOURCE_DIR}/aerosol/module_mosaic_lsode.f90
 
     ${MOSAIC_SOURCE_DIR}/cloud/cldchemistry.f90
 
+    ${MOSAIC_SOURCE_DIR}/solver/adjlr.f
+    ${MOSAIC_SOURCE_DIR}/solver/cdrv.f
+    ${MOSAIC_SOURCE_DIR}/solver/cntnzu.f
+    ${MOSAIC_SOURCE_DIR}/solver/diprep.f
+    ${MOSAIC_SOURCE_DIR}/solver/dlsode.f
+    ${MOSAIC_SOURCE_DIR}/solver/dlsodes.f
+    ${MOSAIC_SOURCE_DIR}/solver/dprep.f
+    ${MOSAIC_SOURCE_DIR}/solver/dprjs.f
+    ${MOSAIC_SOURCE_DIR}/solver/dsolss.f
+    ${MOSAIC_SOURCE_DIR}/solver/jgroup.f
+    ${MOSAIC_SOURCE_DIR}/solver/md.f
+    ${MOSAIC_SOURCE_DIR}/solver/mdi.f
+    ${MOSAIC_SOURCE_DIR}/solver/mdm.f
+    ${MOSAIC_SOURCE_DIR}/solver/mdp.f
+    ${MOSAIC_SOURCE_DIR}/solver/mdu.f
+    ${MOSAIC_SOURCE_DIR}/solver/nnfc.f
+    ${MOSAIC_SOURCE_DIR}/solver/nnsc.f
+    ${MOSAIC_SOURCE_DIR}/solver/nntc.f
+    ${MOSAIC_SOURCE_DIR}/solver/nroc.f
+    ${MOSAIC_SOURCE_DIR}/solver/nsfc.f
+    ${MOSAIC_SOURCE_DIR}/solver/odrv.f
+    ${MOSAIC_SOURCE_DIR}/solver/sro.f
     ${MOSAIC_SOURCE_DIR}/gas/function_arr.f90
     ${MOSAIC_SOURCE_DIR}/gas/function_troe.f90
     ${MOSAIC_SOURCE_DIR}/gas/gaschemistry.f90
@@ -434,23 +485,31 @@ if (ENABLE_MOSAIC)
     ${MOSAIC_SOURCE_DIR}/gas/setgas_urb.f90
     ${MOSAIC_SOURCE_DIR}/gas/solarzenithangle.f90
 
-    ${MOSAIC_SOURCE_DIR}/solver/dlsode.f90
-
+    ${MOSAIC_SOURCE_DIR}/main/domassbalance.f90
+    ${MOSAIC_SOURCE_DIR}/main/function_nbllen.f90
     ${MOSAIC_SOURCE_DIR}/main/function_watervapor.f90
     ${MOSAIC_SOURCE_DIR}/main/init_data_modules.f90
     ${MOSAIC_SOURCE_DIR}/main/integratechemistry.f90
-    ${MOSAIC_SOURCE_DIR}/main/allocatememory.f90
-    ${MOSAIC_SOURCE_DIR}/main/deallocatememory.f90
+    ${MOSAIC_SOURCE_DIR}/main/main.f90
+    ${MOSAIC_SOURCE_DIR}/main/parametric_analysis_mode.f90
+    ${MOSAIC_SOURCE_DIR}/main/module_print_aer.f90
+    ${MOSAIC_SOURCE_DIR}/main/print_gas.f90
+    ${MOSAIC_SOURCE_DIR}/main/readinputfile.f90
+    ${MOSAIC_SOURCE_DIR}/main/setaircomposition.f90
+    ${MOSAIC_SOURCE_DIR}/main/setiofiles.f90
+    ${MOSAIC_SOURCE_DIR}/main/setrunparameters.f90
+    ${MOSAIC_SOURCE_DIR}/main/time_integration_mode.f90
+    ${MOSAIC_SOURCE_DIR}/main/updateemissions.f90
+    ${MOSAIC_SOURCE_DIR}/main/updatemetfields.f90
+    ${MOSAIC_SOURCE_DIR}/main/updatetime.f90
+    ${MOSAIC_SOURCE_DIR}/main/mosaic_allocate_memory.f90
+    ${MOSAIC_SOURCE_DIR}/main/module_mosaic_support.f90
   )
   set_target_properties(mosaic PROPERTIES INCLUDE_DIRECTORIES ${MOSAIC_SOURCE_DIR}/datamodules)
 
   # This custom command installs mosaic in a folder in the way PartMC expects it.
   add_custom_command(TARGET mosaic POST_BUILD
-                     COMMAND cmake -E copy module_data_mosaic_aero.mod ${PROJECT_BINARY_DIR}/include
-                     COMMAND cmake -E copy module_data_mosaic_cloud.mod ${PROJECT_BINARY_DIR}/include
-                     COMMAND cmake -E copy module_data_mosaic_gas.mod ${PROJECT_BINARY_DIR}/include
-                     COMMAND cmake -E copy module_data_mosaic_kind.mod ${PROJECT_BINARY_DIR}/include
-                     COMMAND cmake -E copy module_data_mosaic_main.mod ${PROJECT_BINARY_DIR}/include
+                     COMMAND cmake -E copy *.mod ${PROJECT_BINARY_DIR}/include
                      COMMAND cmake -E copy libmosaic.a ${PROJECT_BINARY_DIR}/lib
                      MAIN_DEPENDENCY libmosaic.a
                      DEPENDS mosaic
