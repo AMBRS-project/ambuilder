@@ -2,7 +2,7 @@ include(ExternalProject)
 
 set(PARTMC_DEPS netcdff)
 if (ENABLE_CAMP)
-  list(PREPEND PARTMC_DEPS camp_proj)
+  list(PREPEND PARTMC_DEPS camp)
   set(PARTMC_ENV_VARS ${PARTMC_ENV_VARS} CAMP_HOME=${CMAKE_BINARY_DIR})
 elseif (ENABLE_MOSAIC)
   list(PREPEND PARTMC_DEPS mosaic)
@@ -19,8 +19,9 @@ get_target_property(NETCDF_FORTRAN_LIB netcdff IMPORTED_LOCATION)
 # NOTE: PartMC has no install targets, so we have to do it ourselves
 add_executable(partmc IMPORTED GLOBAL)
 set_target_properties(partmc PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bin/partmc)
-set(PARTMC_DOWNLOAD_URL https://github.com/AMBRS-Project/partmc/archive/refs/heads/master.zip)
-set(PARTMC_MD5 8dbb176708ab168a2027698f1a17599b)
+# NOTE: we are using a branch of PartMC modified to work with the open source version of MOSAIC
+set(PARTMC_DOWNLOAD_URL https://github.com/AMBRS-Project/partmc/archive/refs/heads/update_mosaic.zip)
+set(PARTMC_MD5 542582a33e4b71bb4f45995b881ddfcf)
 set(PARTMC_CMAKE_ARGS
   -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -34,6 +35,7 @@ set(PARTMC_CMAKE_ARGS
   -DNETCDF_INCLUDE_DIR:PATH=${CMAKE_BINARY_DIR}/include
   -DNETCDF_C_LIB:FILEPATH=${NETCDF_C_LIB}
   -DNETCDF_FORTRAN_LIB:FILEPATH=${NETCDF_FORTRAN_LIB}
+  -G "${CMAKE_GENERATOR}"
 )
 ExternalProject_Add(partmc_proj
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/partmc
@@ -50,7 +52,7 @@ ExternalProject_Add(partmc_proj
   # we pass some environment variables via cmake -E env below
   CONFIGURE_COMMAND cmake -E env ${PARTMC_ENV_VARS} cmake -S ${CMAKE_CURRENT_BINARY_DIR}/partmc-src -B ${CMAKE_CURRENT_BINARY_DIR}/partmc-bld ${PARTMC_CMAKE_ARGS}
   LOG_CONFIGURE TRUE
-  BUILD_COMMAND make # (parallel builds have module dependency issues!)
+  BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j 1 # parallel builds have module dependency issues!
   INSTALL_COMMAND cmake -E copy ${CMAKE_CURRENT_BINARY_DIR}/partmc-bld/partmc ${CMAKE_BINARY_DIR}/bin
   LOG_BUILD TRUE
   LOG_OUTPUT_ON_FAILURE TRUE

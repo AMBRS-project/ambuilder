@@ -295,9 +295,11 @@ if (ENABLE_CAMP)
     JSON_FORTRAN_HOME=${CMAKE_BINARY_DIR}
     SUNDIALS_HOME=${CMAKE_BINARY_DIR}
   )
-  add_library(camp SHARED IMPORTED)
-  set_target_properties(camp PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libcamp.so)
+  add_library(camp SHARED IMPORTED GLOBAL)
+  find_library(CAMP_LIBRARY
+    NAMES libcamp.so libcamp.dylib
+    HINTS "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+  set_target_properties(camp PROPERTIES IMPORTED_LOCATION ${CAMP_LIBRARY})
   ExternalProject_Add(camp_proj
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/camp
     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
@@ -363,6 +365,7 @@ if (ENABLE_CAMP)
     LOG TRUE
     DEPENDEES install # CAMP must be installed before this step
   )
+  add_dependencies(camp camp_proj)
 endif() # ENABLE_CAMP
 
 # MOSAIC (if requested)
