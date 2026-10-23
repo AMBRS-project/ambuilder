@@ -21,7 +21,7 @@ add_executable(partmc IMPORTED GLOBAL)
 set_target_properties(partmc PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bin/partmc)
 # NOTE: we are using a branch of PartMC modified to work with the open source version of MOSAIC
 set(PARTMC_DOWNLOAD_URL https://github.com/AMBRS-Project/partmc/archive/refs/heads/update_mosaic.zip)
-set(PARTMC_MD5 542582a33e4b71bb4f45995b881ddfcf)
+set(PARTMC_MD5 f562d1026798c1f9867f56a73e5f0b0b)
 set(PARTMC_CMAKE_ARGS
   -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
