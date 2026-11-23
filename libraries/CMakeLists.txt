@@ -374,7 +374,7 @@ endif() # ENABLE_CAMP
 if (ENABLE_MOSAIC)
   # NOTE: we use the PartMC team's fork of MOSAIC
   set(MOSAIC_DOWNLOAD_URL https://github.com/open-atmos/MOSAIC/archive/refs/heads/partmc-library.zip)
-  set(MOSAIC_MD5 6c39a3cb63aecb5535f7b490374e0608)
+  set(MOSAIC_MD5 4dba10f580690fdb77134e5d7145e849)
   set(MOSAIC_DOWNLOAD_PATH ${CMAKE_SOURCE_DIR}/downloads/mosaic.zip)
   set(MOSAIC_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/MOSAIC-partmc-library/MOSAIC_v2)
   if (NOT EXISTS ${MOSAIC_SOURCE_DIR})
